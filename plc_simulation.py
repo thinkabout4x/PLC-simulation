@@ -4,6 +4,7 @@ class PLC:
         self.pressure_sensor = Pressure_sensor()
         self.open_sensor = Feedback_sensor(True)
         self.close_sensor = Feedback_sensor(False)
+        self.valve = Directional_valve()
 
         self.analog_signal_pressure = None
         self.digital_signal_opened = None
@@ -24,9 +25,18 @@ class PLC:
         target_pressure_volts = 4*self.target_pressure+1
 
         if target_pressure_volts >= self.analog_signal_pressure:
-            print("Pressure in the system is ok to move the gripper")
+            print("Pressure in the system is ok to close the gripper")
+            self.valve.move(solenoid_position)
+            if solenoid_position:
+                print("Gripper opens")
+            else:
+                print("Gripper closes")
+            print("Input voltage on directional valve: ", self.valve.get_state(), " V")
         else:
-            print("Pressure in the system is not ok to move the gripper")
+            print("Pressure in the system is not ok to close the gripper")
+            print("Gripper opens")
+            self.valve.move(1)
+            print("Input voltage on directional valve: ", self.valve.get_state(), " V")
         
 
 class Pressure_sensor:
@@ -57,3 +67,16 @@ class Feedback_sensor:
     def get_state(self, solenoid):
         self.measurement(solenoid)
         return self.output_voltage
+
+class Directional_valve:
+    def __init__(self):
+        self.input_voltage = 0
+
+    def move(self, solenoid):       
+        if solenoid:
+            self.input_voltage = 0
+        else: 
+            self.input_voltage = 24
+
+    def get_state(self):
+        return self.input_voltage
